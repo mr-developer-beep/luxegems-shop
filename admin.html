@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- ZOOM FIX: maximum-scale=1, user-scalable=no -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Commerce Hub | Admin Panel</title>
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="16x16" href="https://i.postimg.cc/5yd47myM/IMG-4287.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://i.postimg.cc/5yd47myM/IMG-4287.png">
+
+<!-- Android / Chrome -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/5yd47myM/IMG-4287.png">
+
+<!-- Apple iOS -->
+<link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/5yd47myM/IMG-4287.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #3498db; --light: #ecf0f1; --danger: #e74c3c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        
+        body { background: #f4f7f6; overflow-x: hidden; }
+
+        /* ZOOM FIX FOR INPUTS */
+        input, select, textarea { 
+            font-size: 16px !important; /* Prevents zoom on iOS */
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; 
+        }
+
+        /* LOGIN OVERLAY */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        #login-screen input { width: 250px; border: none; }
+        #login-screen button { padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; }
+
+        /* TOP NAV BAR */
+        .top-nav {
+            background: var(--primary); color: white; padding: 15px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .hamburger-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
+        .nav-title { font-size: 18px; font-weight: bold; margin-left: 15px; }
+
+        /* SLIDING SIDEBAR */
+        .sidebar { 
+            position: fixed; top: 0; left: -280px; /* Initially Hidden */
+            width: 260px; height: 100vh; 
+            background: var(--primary); color: white; 
+            z-index: 1001; 
+            transition: left 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); /* Slow Motion Effect */
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar.open { left: 0; } /* Class to slide in */
+
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; }
+        .close-menu { font-size: 24px; cursor: pointer; }
+        
+        .menu { list-style: none; padding: 20px 0; }
+        .menu li { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 15px; }
+        .menu li:hover, .menu li.active { background: var(--secondary); border-left: 5px solid var(--accent); }
+        
+        /* OVERLAY BACKDROP */
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: none; opacity: 0; transition: opacity 0.5s;
+        }
+        .menu-overlay.active { display: block; opacity: 1; }
+
+        /* MAIN CONTENT */
+        .main-content { 
+            padding: 80px 20px 20px; /* Top padding for fixed header */
+            max-width: 800px; margin: 0 auto;
+        }
+        .header { margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .form-grid { grid-template-columns: 1fr 1fr; } .full-width { grid-column: span 2; } }
+        
+        label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+        
+        .btn { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; width: 100%; font-size: 15px; transition: 0.3s; }
+        .btn-add { background: #27ae60; }
+        .btn-add:hover { background: #219150; }
+        .btn-del { background: var(--danger); padding: 8px 12px; font-size: 13px; width: auto; }
+        .btn-save { background: var(--accent); }
+
+        /* TABLE */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 500px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
+        th { background: #f8f9fa; color: #333; }
+        .product-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; }
+
+        /* SECTIONS */
+        .section { display: none; animation: fadeIn 0.4s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <h2 style="margin-bottom: 20px;"><i class="fas fa-lock"></i> Admin Login</h2>
+        <input type="password" id="admin-pass" placeholder="Password">
+        <button onclick="checkLogin()">Enter Panel</button>
+        <p style="margin-top: 15px; font-size: 12px; opacity: 0.6;">(Do or Die)</p>
+    </div>
+
+    <!-- TOP NAV BAR -->
+    <div class="top-nav">
+        <div style="display: flex; align-items: center;">
+            <button class="hamburger-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="nav-title">E-Commerce Hub</span>
+        </div>
+        <div>
+            <i class="fas fa-user-circle" style="font-size: 24px;"></i>
+        </div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+
+    <!-- SLIDING SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span style="font-weight: bold; font-size: 18px;">Menu</span>
+            <span class="close-menu" onclick="toggleMenu()">&times;</span>
+        </div>
+        <ul class="menu">
+            <li class="active" onclick="switchSection('products')"><i class="fas fa-gem"></i> Manage Products</li>
+            <li onclick="switchSection('orders')"><i class="fas fa-shopping-cart"></i> Orders List</li>
+            <li onclick="switchSection('settings')"><i class="fas fa-cog"></i> Site Settings</li>
+        </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        <!-- PRODUCTS SECTION -->
+        <div id="products" class="section active">
+            <div class="header">
+                <h2>Product Inventory</h2>
+            </div>
+
+            <!-- Add Product Form -->
+            <div class="card">
+                <h3 style="margin-bottom: 15px; color: var(--primary);">Add New Product</h3>
+                <div class="form-grid">
+                    <div class="full-width">
+                        <label>Product Name</label>
+                        <input type="text" id="p-name" placeholder="Ex: Gold Ring">
+                    </div>
+                    <div>
+                        <label>Category</label>
+                        <select id="p-cat">
+                            <option value="Bangles">Bangles</option>
+                            <option value="Earrings">Earrings</option>
+                            <option value="Locket">Locket</option>
+                            <option value="Nose Pin">Nose Pin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Price (BDT)</label>
+                        <input type="number" id="p-price" placeholder="Ex: 1500">
+                    </div>
+                    <div class="full-width">
+                        <label>Image Link (Postimages Direct Link)</label>
+                        <input type="text" id="p-img" placeholder="https://i.postimg.cc/...">
+                    </div>
+                    <div class="full-width">
+                        <label>Extra Details (Optional)</label>
+                        <input type="text" id="p-desc" placeholder="Size, Color, Material (comma separated)">
+                    </div>
+                </div>
+                <button class="btn btn-add" onclick="addProduct()" style="margin-top: 15px;">Add Product</button>
+            </div>
+
+            <!-- Product List Table -->
+            <div class="card">
+                <h3>Current Products</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Img</th>
+                                <th>Name / Cat</th>
+                                <th>Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-table-body">
+                            <!-- Loaded from Firebase -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS SECTION -->
+        <div id="orders" class="section">
+            <div class="header"><h2>Customer Orders</h2></div>
+            <div class="card">
+                <div class="table-responsive">
+                    <table id="order-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS SECTION -->
+        <div id="settings" class="section">
+            <div class="header"><h2>Website Settings</h2></div>
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Social Media Links</h3>
+                <label>Facebook Page Link</label>
+                <input type="text" id="s-fb" placeholder="https://facebook.com/yourpage">
+                
+                <label>Instagram Link</label>
+                <input type="text" id="s-insta" placeholder="https://instagram.com/yourpage">
+                
+                <label>WhatsApp Link</label>
+                <input type="text" id="s-wa" placeholder="https://wa.me/88017...">
+                
+                <button class="btn btn-save" onclick="saveSettings()" style="margin-top: 15px;">Update Links</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // CONFIGURATION
+        const firebaseConfig = {
+            // ============================================
+            // আপনার FIREBASE CONFIG এখানে পেস্ট করুন
+            // ============================================
+            apiKey: "AIzaSyCZhwYp5vO3K2EOhgAbfJ80_PeOpwXUk0g",
+  authDomain: "luxegems-shop.firebaseapp.com",
+  databaseURL: "https://luxegems-shop-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "luxegems-shop",
+  storageBucket: "luxegems-shop.firebasestorage.app",
+  messagingSenderId: "309710517144",
+  appId: "1:309710517144:web:134def85617a0d01acb1ed"
+
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- GLOBAL FUNCTIONS ---
+        window.addProduct = function() {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const cat = document.getElementById('p-cat').value;
+            const img = document.getElementById('p-img').value;
+            const desc = document.getElementById('p-desc').value;
+
+            if(!name || !price) { alert("Name and Price are required!"); return; }
+
+            const newProductRef = push(ref(db, 'products'));
+            set(newProductRef, {
+                name: name,
+                price: parseInt(price),
+                category: cat,
+                img: img || 'https://via.placeholder.com/150',
+                desc: desc
+            });
+
+            alert("Product Added Successfully!");
+            // Clear fields
+            document.getElementById('p-name').value = "";
+            document.getElementById('p-price').value = "";
+            document.getElementById('p-img').value = "";
+            document.getElementById('p-desc').value = "";
+        }
+
+        window.deleteProduct = function(id) {
+            if(confirm("Delete this product?")) {
+                remove(ref(db, 'products/' + id));
+            }
+        }
+
+        window.saveSettings = function() {
+            set(ref(db, 'settings'), {
+                facebook: document.getElementById('s-fb').value,
+                instagram: document.getElementById('s-insta').value,
+                whatsapp: document.getElementById('s-wa').value
+            });
+            alert("Settings Updated!");
+        }
+
+        // --- REALTIME LISTENERS ---
+        
+        // Products
+        onValue(ref(db, 'products'), (snapshot) => {
+            const list = document.getElementById('product-table-body');
+            list.innerHTML = "";
+            if(snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    const item = child.val();
+                    const key = child.key;
+                    const row = `
+                        <tr>
+                            <td><img src="${item.img}" class="product-thumb"></td>
+                            <td>
+                                <strong>${item.name}</strong><br>
+                                <small style="color:#777">${item.category}</small><br>
+                                <small style="color:#999; font-size:11px;">${item.desc || ''}</small>
+                            </td>
+                            <td>৳${item.price}</td>
+                            <td><button class="btn btn-del" onclick="deleteProduct('${key}')"><i class="fas fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                    list.innerHTML += row;
+                });
+            } else {
+                list.innerHTML = "<tr><td colspan='4'>No products found.</td></tr>";
+            }
+        });
+
+        // Orders
+        onValue(ref(db, 'orders'), (snapshot) => {
+            const list = document.getElementById('order-table-body');
+            list.innerHTML = "";
+            if(snapshot.exists()) {
+                // Convert object to array to reverse (show newest first)
+                const ordersArr = [];
+                snapshot.forEach(child => ordersArr.push(child.val()));
+                ordersArr.reverse();
+
+                ordersArr.forEach((order) => {
+                    let itemsStr = "";
+                    if(order.cart) {
+                        order.cart.forEach(i => itemsStr += `${i.name}, `);
+                    }
+                    
+                    const row = `
+                        <tr>
+                            <td>${new Date(order.timestamp).toLocaleDateString()}</td>
+                            <td>
+                                <strong>${order.customer.name}</strong><br>
+                                <a href="tel:${order.customer.phone}" style="color:var(--accent);">${order.customer.phone}</a><br>
+                                <small>${order.customer.address}</small>
+                            </td>
+                            <td><small>${itemsStr.slice(0, -2)}</small></td>
+                            <td><strong>৳${order.total}</strong></td>
+                        </tr>
+                    `;
+                    list.innerHTML += row;
+                });
+            } else {
+                list.innerHTML = "<tr><td colspan='4'>No orders yet.</td></tr>";
+            }
+        });
+
+        // Settings
+        onValue(ref(db, 'settings'), (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                document.getElementById('s-fb').value = data.facebook || "";
+                document.getElementById('s-insta').value = data.instagram || "";
+                document.getElementById('s-wa').value = data.whatsapp || "";
+            }
+        });
+
+    </script>
+
+    <!-- UI LOGIC -->
+    <script>
+        function checkLogin() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === "prio1280@") { 
+                document.getElementById('login-screen').style.display = 'none';
+            } else {
+                alert("Wrong Password!");
+            }
+        }
+
+        // Hamburger Menu Logic
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('menu-overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function switchSection(id) {
+            // Active Section Logic
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            // Active Menu Item Logic
+            document.querySelectorAll('.menu li').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Close Menu on Mobile automatically
+            toggleMenu();
+        }
+    </script>
+</body>
+</html>
